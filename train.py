@@ -1,5 +1,5 @@
 import torch
-from loadData import loadDataSet
+from utils.loadData import loadDataSet
 from utils.models import ResNet50, AlexNet
 import torch.nn as nn
 from tqdm import tqdm

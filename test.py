@@ -1,6 +1,6 @@
 from utils.models import ResNet50
 import torch
-from loadData import loadDataSet
+from utils.loadData import loadDataSet
 from torch.utils.data import DataLoader
 from utils.saveCategoryInfo import saveAllInfo
 import numpy as np
