@@ -4,6 +4,7 @@ from sklearn.preprocessing import label_binarize
 import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
+import torch.nn.functional as F
 
 
 def getPrecision_Recall_F1score(Y_true, Y_score, target_names):
@@ -155,6 +156,17 @@ def saveConfusionMatrix(filePath, C2):
     f.savefig(f"{filePath}/confusion_matrix.png", bbox_inches='tight')
 
 
+def twoLabel(y_temp, classes):
+    temp = []
+    first = classes[0]
+    for i in y_temp:
+        if i == first:
+            temp.append([1, 0])
+        else:
+            temp.append([0, 1])
+    return np.array(temp)
+
+
 def saveAllInfo(model_output, label_map, savePath, colors, lw=2):
     y_temp = model_output["GT"]
     predict_temp = model_output["predict"]
@@ -166,7 +178,12 @@ def saveAllInfo(model_output, label_map, savePath, colors, lw=2):
     y_score = [y.cpu().numpy() for temp in out_temp for y in temp]
     C2 = confusion_matrix(y_true, y_predict, labels=classes)
     A = classification_report(y_true, y_predict, target_names=target_names)
-    Y_test = label_binarize(y_true, classes=classes)
+    if len(classes) == 2:
+        Y_test = twoLabel(y_true, classes)
+    elif len(classes) > 2:
+        Y_test = label_binarize(y_true, classes=classes)
+    else:
+        print("Only one class exist.")
     Y_score = np.array(y_score)
     precision, recall, average_precision, f1_score, threshold = getPrecision_Recall_F1score(Y_test, Y_score,
                                                                                             target_names)

@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from utils.creatFolder import createSavePath
 import time
+import argparse
 
 
 def plot_history(history, savePath):
@@ -73,55 +74,48 @@ def test(data_loader, network, loss_fn, device):
     return float(acc), float(round(test_loss, 4))
 
 
-class FocalLoss(nn.Module):
-    def __init__(self, alpha=[.25, .25, .25], gamma=2):
-        super(FocalLoss, self).__init__()
-        self.alpha = alpha
-        self.gamma = gamma
-
-    def forward(self, output, target):
-        y_pred = output
-        y_true = target
-        alpha = torch.cuda.FloatTensor(self.alpha)
-        gamma = self.gamma
-        ce = -torch.multiply(y_true, torch.log(y_pred))
-        factor = torch.pow((torch.ones_like(y_true) - y_pred), gamma)
-        fl = torch.matmul(torch.multiply(factor, ce), alpha)
-        focal_loss = fl.mean()
-        return focal_loss
-
-
-if __name__ == '__main__':
-    n_epochs = 50
-    batch_size_train = 8
-    batch_size_test = 8
-    learning_rate = 0.01
-    momentum = 0.5
-    log_interval = 10
+def run(
+        source="./dataset",
+        image_set="dogs_vs_cats",
+        epochs=50,
+        batch_size=8,
+        workers=4,
+        model="resnet50",
+        cudnn=True,
+        early_stop=False,
+        save=True
+):
+    n_epochs = epochs
+    batch_size_train = batch_size
+    batch_size_test = batch_size
+    # learning_rate = 0.01
+    # momentum = 0.5
+    # log_interval = 10
     random_seed = 1
-    torch.backends.cudnn.enabled = True
     torch.manual_seed(random_seed)
-    is_earlystop = True
-    # image_set = "ICM"
-    image_set = "dogs_vs_cats"
-    model_name = "alexnet"
+    is_earlystop = early_stop
+    model_name = model
     saveRoot = f"./runs/{image_set}/train/"
     savePath = createSavePath(saveRoot)
     # model_save_path = f"models/{image_set}/{model_name}/focal"
     model_save_path = f"{savePath}/weight"
     if not os.path.exists(model_save_path):
         os.makedirs(model_save_path)
-    train_set = loadDataSet(f"dataset/{image_set}/train", resiz=(320, 320))
-    valid_set = loadDataSet(f"dataset/{image_set}/train", resiz=(320, 320))
+    train_set = loadDataSet(f"{source}/{image_set}/train", resiz=(320, 320))
+    valid_set = loadDataSet(f"{source}/{image_set}/train", resiz=(320, 320))
     # test_set = loadDataSet(f"dataset/{image_set}/test")
     train_loader = loader = DataLoader(
-        dataset=train_set, batch_size=batch_size_train, shuffle=True, pin_memory=True, num_workers=4)
+        dataset=train_set, batch_size=batch_size_train, shuffle=True, pin_memory=True, num_workers=workers)
     valid_loader = DataLoader(
-        dataset=valid_set, batch_size=batch_size_test, shuffle=False, pin_memory=True, num_workers=4)
+        dataset=valid_set, batch_size=batch_size_test, shuffle=False, pin_memory=True, num_workers=workers)
     train_amount = np.array(train_loader.dataset.lbls_num())
     train_alpha = (train_amount / np.sum(train_amount))
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Using {device} device")
+    if device == "cuda" and cudnn:
+        torch.backends.cudnn.enabled = True
+    else:
+        torch.backends.cudnn.enabled = False
     # 建立類神經網路模型，並放置於 GPU 或 CPU 上
     if model_name == "resnet50":
         model = ResNet50(len(train_loader.dataset.labelmap)).to(device)
@@ -161,12 +155,35 @@ if __name__ == '__main__':
         history["val_acc"].append(valid_acc)
         history["val_loss"].append(valid_loss)
         print(f"val acc {valid_acc} val loss {valid_loss}")
-        if valid_acc > valid_acc_keep:
+        if valid_acc > valid_acc_keep and save:
             torch.save(model.state_dict(), f'./{model_save_path}/best.pth')
             torch.save(optimizer.state_dict(), f'./{model_save_path}/optimizer.pth')
-        if valid_loss_temp > 5 or valid_loss_zero > 5:
-            print(f"Early stop at the {epoch}_th epochs.")
-            break
-    plot_history(history, savePath)
-    torch.save(model.state_dict(), f'./{model_save_path}/final.pth')
-    print(f"Training {epoch} epochs cost {round(np.sum(total_time_temp), 2)} seconds, average cost {round(np.mean(total_time_temp), 2)} s/epoch")
+        if is_earlystop:
+            if valid_loss_temp > 5 or valid_loss_zero > 5:
+                print(f"Early stop at the {epoch}_th epochs.")
+                break
+    if save:
+        plot_history(history, savePath)
+        torch.save(model.state_dict(), f'./{model_save_path}/final.pth')
+    print(
+        f"Training {epoch} epochs cost {round(np.sum(total_time_temp), 2)} seconds, average cost {round(np.mean(total_time_temp), 2)} s/epoch")
+
+
+def parse_opt():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--source', type=str, default="./dataset", help="images dataset root")
+    parser.add_argument('--image-set', type=str, default="dogs_vs_cats", help="image set name")
+    parser.add_argument('--epochs', type=int, default=50)
+    parser.add_argument('--batch-size', type=int, default=8)
+    parser.add_argument('--workers', type=int, default=4)
+    parser.add_argument('--model', type=str, default="resnet50")
+    parser.add_argument('--cudnn', type=bool, default=True)
+    parser.add_argument('--early-stop', type=bool, default=False)
+    parser.add_argument('--save', type=bool, default=True)
+    opt = parser.parse_args()
+    return opt
+
+
+if __name__ == '__main__':
+    opt = parse_opt()
+    run(**vars(opt))
