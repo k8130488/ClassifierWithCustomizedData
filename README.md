@@ -37,6 +37,8 @@ The Dataset must be prepared by yourself and placed in the following path.
 ## Train
 You can train your model with train.py\
 `python train.py --source dataset --image-set dogs_vs_cats --epochs 100 --image-size 320 --model alexnet --early-stop True`
+If your dataset images are of the same size, you don’t need to set image-size, as follows\
+`python train.py --source dataset --image-set dogs_vs_cats --epochs 100 --model alexnet --early-stop True`
 
 ## Test
 You can get the performance of the model, like confusion matrix, PR curve, and ROC curve, with test.py\
