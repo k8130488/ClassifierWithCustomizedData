@@ -40,7 +40,7 @@ def parse_opt():
     parser.add_argument('--image-set', type=str, default="dogs_vs_cats", help="image set name")
     parser.add_argument('--batch-size', type=int, default=8)
     parser.add_argument('--workers', type=int, default=4)
-    parser.add_argument('--image-size', type=int, default=512)
+    parser.add_argument('--image-size', type=int)
     parser.add_argument('--model', type=str, default="resnet50")
     parser.add_argument('--model_weight', type=str, default="./runs/dogs_vs_cats/train/exp1/weight/best.pth")
     opt = parser.parse_args()
@@ -52,7 +52,7 @@ def run(
         image_set="dogs_vs_cats",
         batch_size=8,
         workers=4,
-        image_size=512,
+        image_size=None,
         model="resnet50",
         model_weight="./runs/dogs_vs_cats/train/exp1/weight/best.pth"
 ):

@@ -80,6 +80,7 @@ def run(
         epochs=50,
         batch_size=8,
         workers=4,
+        image_size=None,
         model="resnet50",
         cudnn=True,
         early_stop=False,
@@ -101,8 +102,8 @@ def run(
     model_save_path = f"{savePath}/weight"
     if not os.path.exists(model_save_path):
         os.makedirs(model_save_path)
-    train_set = loadDataSet(f"{source}/{image_set}/train", resiz=(320, 320))
-    valid_set = loadDataSet(f"{source}/{image_set}/train", resiz=(320, 320))
+    train_set = loadDataSet(f"{source}/{image_set}/train", resiz=(image_size, image_size))
+    valid_set = loadDataSet(f"{source}/{image_set}/train", resiz=(image_size, image_size))
     # test_set = loadDataSet(f"dataset/{image_set}/test")
     train_loader = loader = DataLoader(
         dataset=train_set, batch_size=batch_size_train, shuffle=True, pin_memory=True, num_workers=workers)
@@ -176,6 +177,7 @@ def parse_opt():
     parser.add_argument('--epochs', type=int, default=50)
     parser.add_argument('--batch-size', type=int, default=8)
     parser.add_argument('--workers', type=int, default=4)
+    parser.add_argument('--image-size', type=int)
     parser.add_argument('--model', type=str, default="resnet50")
     parser.add_argument('--cudnn', type=bool, default=True)
     parser.add_argument('--early-stop', type=bool, default=False)
