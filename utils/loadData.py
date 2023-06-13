@@ -3,7 +3,7 @@ from PIL import Image
 from torch.utils.data import DataLoader
 from torch.utils.data.dataset import Dataset
 import os
-from DataSets import MyDataSet
+from utils.DataSets import MyDataSet
 import torch
 
 
@@ -39,8 +39,8 @@ if __name__ == '__main__':
     batch_size = 16
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Using {device} device")
-    train_set = loadDataSet("dataset/dogs_vs_cats/train", resiz=(320, 320))
-    valid_set = loadDataSet("dataset/dogs_vs_cats/test", resiz=(320, 320))
+    train_set = loadDataSet("../dataset/dogs_vs_cats/train", resiz=(320, 320))
+    valid_set = loadDataSet("../dataset/dogs_vs_cats/test", resiz=(320, 320))
     train_loader = DataLoader(
         dataset=train_set, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=4)
     valid_loader = DataLoader(
